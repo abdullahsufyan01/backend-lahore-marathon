@@ -3,7 +3,7 @@ const connectDB = require("./connection");
 const dotenv = require("dotenv");
 const cors = require("cors");
 const Runner = require("./Runner");
-
+//  vercel --prod for next depoloyement
 dotenv.config();
 
 const app = express();
@@ -24,32 +24,48 @@ app.get("/", (req, res) => {
 
 // Get all runners with structured response
 app.get("/api/runners", async (req, res) => {
-    try {
-      const completeData = await Runner.find({});
-      const runners_5k = completeData.filter(r => r.raceType === "5K");
-      const positions_5k = runners_5k.filter(r => ["1", "2", "3"].includes(r.positionNum));
-  
-      const half_marathon = completeData.filter(r => r.raceType === "Half Marathon");
-      const positions_half_marathon = half_marathon.filter(r => ["1", "2", "3"].includes(r.positionNum));
-  
-      const full_marathon = completeData.filter(r => r.raceType === "Full Marathon");
-      const positions_full_marathon = full_marathon.filter(r => ["1", "2", "3"].includes(r.positionNum));
-  
-      res.json({
-        msg: "Data fetched successfully",
-        complete_data: completeData,
-        runners_5k,
-        positions_5k,
-        half_marathon,
-        positions_half_marathon,
-        full_marathon,
-        positions_full_marathon
-      });
-    } catch (error) {
-      res.status(500).json({ message: "Server Error", error: error.message });
-    }
-  });
-  
+  try {
+    const completeData = await Runner.find({});
+
+    // Helper function to get top 3 male & female positions based on rankInSimilarGender
+    const getTopPositionsByGender = (runners) => ({
+      male: runners
+        .filter(r => r.gender.toUpperCase() === "MALE" && ["1", "2", "3"].includes(r.rankInSimilarGender))
+        .sort((a, b) => a.rankInSimilarGender - b.rankInSimilarGender),
+      female: runners
+        .filter(r => r.gender.toUpperCase() === "FEMALE" && ["1", "2", "3"].includes(r.rankInSimilarGender))
+        .sort((a, b) => a.rankInSimilarGender - b.rankInSimilarGender)
+    });
+
+    // Grouping runners by race type
+    const runners_5k = completeData.filter(r => r.raceType === "5K");
+    const runners_half_marathon = completeData.filter(r => r.raceType === "Half Marathon");
+    const runners_full_marathon = completeData.filter(r => r.raceType === "Full Marathon");
+
+    res.json({
+      msg: "Data fetched successfully",
+      complete_data: completeData,
+      races: {
+        "Full Marathon": {
+          runners: runners_full_marathon,
+          positions: getTopPositionsByGender(runners_full_marathon)
+        },
+        "Half Marathon": {
+          runners: runners_half_marathon,
+          positions: getTopPositionsByGender(runners_half_marathon)
+        },
+        "5K": {
+          runners: runners_5k,
+          positions: getTopPositionsByGender(runners_5k)
+        },
+      }
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: "Server Error", error: error.message });
+  }
+});
+
 
 // Get a specific runner by bib number
 app.get('/api/runners/:bibNo', async (req, res) => {

@@ -6,6 +6,8 @@ const RunnerSchema = new mongoose.Schema({
   runDuration: String,
   raceStatus: String,
   positionNum: String,
+  gender:String,
+  rankInSimilarGender:String,
   raceType: String // 5K, Half Marathon, Full Marathon
 });
 

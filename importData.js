@@ -40,6 +40,7 @@ const importData = async () => {
       positions_full_marathon: []
     };
 
+
     for (const file of raceFiles) {
       if (!fs.existsSync(file.filePath)) {
         console.error(`❌ File not found: ${file.filePath}`);
@@ -52,7 +53,7 @@ const importData = async () => {
 
       await new Promise((resolve, reject) => {
         fs.createReadStream(file.filePath)
-          .pipe(csvParser({ headers: ["name", "bibNo", "runDuration", "raceStatus", "positionNum"] }))
+          .pipe(csvParser({ headers: ["name", "bibNo", "runDuration", "raceStatus", "positionNum","gender","rankInSimilarGender"] }))
           .on("data", (data) => {
             const runner = {
               name: data.name.trim(),
@@ -60,6 +61,8 @@ const importData = async () => {
               runDuration: data.runDuration.trim(),
               raceStatus: data.raceStatus.trim(),
               positionNum: data.positionNum.trim(),
+              gender: data.gender.trim(),
+              rankInSimilarGender: data.rankInSimilarGender.trim(),
               raceType: file.raceType,
             };
 
